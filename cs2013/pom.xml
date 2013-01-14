@@ -8,4 +8,49 @@
 	</parent>
 	<artifactId>cs2013</artifactId>
 	<name>k0D3St0rY :: cs2013</name>
+
+	<properties>
+		<netty-version>4.0.0.Alpha8</netty-version>
+		<getopt-version>1.0.13</getopt-version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-codec-http</artifactId>
+			<version>${netty-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>gnu.getopt</groupId>
+			<artifactId>java-getopt</artifactId>
+			<version>${getopt-version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>java</executable>
+					<arguments>
+						<argument>-classpath</argument>
+						<classpath />
+						<argument>org.k0D3St0rY.cs2013.server.HttpCSServer</argument>
+						<argument>-b${bind}</argument>
+						<argument>-p${port}</argument>
+					</arguments>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
