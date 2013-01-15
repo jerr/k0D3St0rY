@@ -10,20 +10,20 @@
 	<name>k0D3St0rY :: cs2013</name>
 
 	<properties>
-		<netty-version>4.0.0.Alpha8</netty-version>
+		<netty-version>3.6.1.Final</netty-version>
 		<getopt-version>1.0.13</getopt-version>
 	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-codec-http</artifactId>
-			<version>${netty-version}</version>
-		</dependency>
-		<dependency>
 			<groupId>gnu.getopt</groupId>
 			<artifactId>java-getopt</artifactId>
 			<version>${getopt-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty</artifactId>
+			<version>${netty-version}</version>
 		</dependency>
 	</dependencies>
 

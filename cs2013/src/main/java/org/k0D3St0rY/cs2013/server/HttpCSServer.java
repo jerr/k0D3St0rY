@@ -1,13 +1,14 @@
 package org.k0D3St0rY.cs2013.server;
 
 import gnu.getopt.Getopt;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.socket.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 public class HttpCSServer {
 
@@ -20,18 +21,17 @@ public class HttpCSServer {
     }
 
     public void run() throws Exception {
-        System.out.println("Strarting server! (" + bind + ":" + port +")");
-        // Configure the server.
-        HttpCSServerBootstrap boot = new HttpCSServerBootstrap(bind).localAddress(bind, port);
-        try {
-            boot.group(new NioEventLoopGroup(), new NioEventLoopGroup()).channel(NioServerSocketChannel.class)
-                    .childHandler(new HttpCSServerInitializer()).localAddress(new InetSocketAddress(port));
+        System.out.println("Strarting server! (" + bind + ":" + port + ")");
 
-            Channel ch = boot.bind().sync().channel();
-            ch.closeFuture().sync();
-        } finally {
-            boot.shutdown();
-        }
+        // Configure the server.
+        ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
+                Executors.newCachedThreadPool()));
+
+        // Set up the event pipeline factory.
+        bootstrap.setPipelineFactory(new HttpCSServerPipelineFactory());
+
+        // Bind and start to accept incoming connections.
+        bootstrap.bind(new InetSocketAddress(bind, port));
     }
 
     public static void main(String[] args) {
