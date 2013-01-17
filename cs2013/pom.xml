@@ -11,6 +11,8 @@
 
 	<properties>
 		<netty-version>3.6.1.Final</netty-version>
+		<guice-version>3.0</guice-version>
+		<guava-version>13.0.1</guava-version>
 		<getopt-version>1.0.13</getopt-version>
 	</properties>
 
@@ -19,6 +21,16 @@
 			<groupId>gnu.getopt</groupId>
 			<artifactId>java-getopt</artifactId>
 			<version>${getopt-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${guava-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
@@ -45,7 +57,7 @@
 					<arguments>
 						<argument>-classpath</argument>
 						<classpath />
-						<argument>org.k0D3St0rY.cs2013.server.HttpCSServer</argument>
+						<argument>org.k0D3St0rY.cs2013.server.CSApplication</argument>
 						<argument>-b${bind}</argument>
 						<argument>-p${port}</argument>
 					</arguments>
