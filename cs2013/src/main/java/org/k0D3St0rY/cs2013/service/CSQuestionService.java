@@ -13,6 +13,7 @@ public class CSQuestionService extends AbstractCSService {
     public CSQuestionService() {
         questions.put("Quelle est ton adresse email","jeremie.codestory@gmail.com");
         questions.put("Es tu heureux de participer(OUI/NON)","OUI");
+        questions.put("Es tu abonne a la mailing list(OUI/NON)", "OUI");
     }
     
     @Override
