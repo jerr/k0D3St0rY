@@ -16,6 +16,7 @@ public class CSQuestionService extends AbstractCSService {
         questions.put("Es tu abonne a la mailing list(OUI/NON)", "OUI");
         questions.put("Es tu pret a recevoir une enonce au format markdown par http post(OUI/NON)", "OUI");
         questions.put("Est ce que tu reponds toujours oui(OUI/NON)", "NON");
+        questions.put("As tu bien recu le premier enonce(OUI/NON)", "NON");
     }
 
     @Override
