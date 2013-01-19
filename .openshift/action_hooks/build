@@ -1,2 +1,2 @@
 #!/bin/bash
-mvn clean install -DlocalRepository=$OPENSHIFT_DATA_DIR\.m2\localRepository
+mvn clean install -DlocalRepository=$OPENSHIFT_DATA_DIR\.m2\localRepository -Dmaven.test.skip

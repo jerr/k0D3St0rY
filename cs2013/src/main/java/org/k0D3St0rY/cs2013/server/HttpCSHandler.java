@@ -2,9 +2,12 @@ package org.k0D3St0rY.cs2013.server;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -16,8 +19,12 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieDecoder;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -28,24 +35,27 @@ import org.jboss.netty.handler.codec.http.multipart.DiskFileUpload;
 import org.jboss.netty.handler.codec.http.multipart.FileUpload;
 import org.jboss.netty.handler.codec.http.multipart.HttpDataFactory;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
-import org.jboss.netty.handler.codec.http.multipart.InterfaceHttpData;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder.EndOfDataDecoderException;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder.ErrorDataDecoderException;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder.IncompatibleDataDecoderException;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder.NotEnoughDataDecoderException;
+import org.jboss.netty.handler.codec.http.multipart.InterfaceHttpData;
 import org.jboss.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
 import org.jboss.netty.logging.InternalLogger;
 import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.util.CharsetUtil;
 import org.k0D3St0rY.cs2013.service.ServiceFactory;
 
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 
 public class HttpCSHandler extends SimpleChannelHandler {
-    private final ChannelGroup allChannels;
-    private final ServiceFactory serviceFactory;
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(HttpCSHandler.class);
+
+    private final ServiceFactory serviceFactory;
+
+    private HttpRequest request;
 
     private boolean readingChunks;
 
@@ -62,13 +72,7 @@ public class HttpCSHandler extends SimpleChannelHandler {
 
     @Inject
     HttpCSHandler(ChannelGroup allChannels, ServiceFactory serviceFactory) {
-        this.allChannels = allChannels;
         this.serviceFactory = serviceFactory;
-    }
-
-    @Override
-    public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        allChannels.add(e.getChannel());
     }
 
     @Override
@@ -86,12 +90,11 @@ public class HttpCSHandler extends SimpleChannelHandler {
                 decoder.cleanFiles();
                 decoder = null;
             }
-
-            HttpRequest request = (HttpRequest) e.getMessage();
+            HttpRequest request = this.request = (HttpRequest) e.getMessage();
             logger.info("## " + request.getUri());
             URI uri = new URI(request.getUri());
 
-            if (uri.getPath().startsWith("/?q")) {
+            if (uri.getPath().startsWith("/")) {
                 QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
                 Map<String, List<String>> params = queryStringDecoder.getParameters();
                 if (params.size() > 0) {
@@ -99,11 +102,7 @@ public class HttpCSHandler extends SimpleChannelHandler {
                     logger.info("## " + request.getUri() + " >> " + result);
                     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
                     response.setContent(ChannelBuffers.copiedBuffer(result, Charsets.UTF_8));
-                    e.getChannel().write(response).addListener(new ChannelFutureListener() {
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            future.getChannel().close();
-                        }
-                    });
+                    e.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
                 }
             }
 
@@ -114,12 +113,14 @@ public class HttpCSHandler extends SimpleChannelHandler {
             // if GET Method: should not try to create a HttpPostRequestDecoder
             try {
                 decoder = new HttpPostRequestDecoder(factory, request);
-                logger.info("## DECODER " + decoder);               
+                logger.info("## DECODER " + decoder);
             } catch (ErrorDataDecoderException e1) {
                 e1.printStackTrace();
+                writeResponse(e.getChannel());
                 Channels.close(e.getChannel());
                 return;
             } catch (IncompatibleDataDecoderException e1) {
+                writeResponse(e.getChannel());
                 return;
             }
 
@@ -129,20 +130,24 @@ public class HttpCSHandler extends SimpleChannelHandler {
             } else {
                 // Not chunk version
                 readHttpDataAllReceive(e.getChannel());
+                writeResponse(e.getChannel());
             }
         } else {
+            logger.info("## DECODER " + decoder);
             // New chunk is received
             HttpChunk chunk = (HttpChunk) e.getMessage();
             try {
                 decoder.offer(chunk);
             } catch (ErrorDataDecoderException e1) {
                 e1.printStackTrace();
+                writeResponse(e.getChannel());
                 Channels.close(e.getChannel());
                 return;
             }
             readHttpDataChunkByChunk(e.getChannel());
             if (chunk.isLast()) {
                 readHttpDataAllReceive(e.getChannel());
+                writeResponse(e.getChannel());
                 readingChunks = false;
             }
         }
@@ -162,6 +167,7 @@ public class HttpCSHandler extends SimpleChannelHandler {
         } catch (NotEnoughDataDecoderException e1) {
             // Should not be!
             e1.printStackTrace();
+            writeResponse(channel);
             Channels.close(channel);
             return;
         }
@@ -172,11 +178,6 @@ public class HttpCSHandler extends SimpleChannelHandler {
         }
     }
 
-    /**
-     * Example of reading request by chunk and getting values from chunk to chunk
-     * 
-     * @param channel
-     */
     private void readHttpDataChunkByChunk(Channel channel) {
         logger.info("readHttpDataAllReceive");
         try {
@@ -207,6 +208,28 @@ public class HttpCSHandler extends SimpleChannelHandler {
                     logger.warn("File too long :" + fileUpload.length());
                 }
             }
+        }
+    }
+
+    private void writeResponse(Channel channel) {
+
+        // Decide whether to close the connection or not.
+        boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION))
+                || request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
+                && !HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.getHeader(HttpHeaders.Names.CONNECTION));
+
+        // Build the response object.
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CREATED);
+        response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=UTF-8");
+
+        if (!close) {
+          response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, "0");
+        }
+
+        // Write the response.
+        ChannelFuture future = channel.write(response);
+        if (close) {
+            future.addListener(ChannelFutureListener.CLOSE);
         }
     }
 
