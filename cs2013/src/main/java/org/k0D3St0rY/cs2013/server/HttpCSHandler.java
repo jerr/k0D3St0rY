@@ -30,6 +30,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.jboss.netty.handler.codec.http.multipart.Attribute;
 import org.jboss.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import org.jboss.netty.handler.codec.http.multipart.DiskFileUpload;
 import org.jboss.netty.handler.codec.http.multipart.FileUpload;
@@ -109,11 +110,18 @@ public class HttpCSHandler extends SimpleChannelHandler {
             if (!uri.getPath().startsWith("/enonce")) {
                 return;
             }
-
+            
             // if GET Method: should not try to create a HttpPostRequestDecoder
             try {
                 decoder = new HttpPostRequestDecoder(factory, request);
                 logger.info("## DECODER " + decoder);
+//                for (InterfaceHttpData data : decoder.getBodyHttpDatas()) {
+//                    if (data.getHttpDataType() == HttpDataType.Attribute) {
+//                        Attribute attribute = (Attribute) data;
+//                        String value = attribute.getValue();
+//                        System.out.println("data " + data.getName() + "\n" + value);
+//                     }                     
+//                }
             } catch (ErrorDataDecoderException e1) {
                 e1.printStackTrace();
                 writeResponse(e.getChannel());
@@ -208,7 +216,17 @@ public class HttpCSHandler extends SimpleChannelHandler {
                     logger.warn("File too long :" + fileUpload.length());
                 }
             }
-        }
+        } else {
+            if (data.getHttpDataType() == HttpDataType.Attribute) {
+                try {
+                Attribute attribute = (Attribute) data;
+                String value = attribute.getValue();
+                System.out.println("data :" + attribute.getName() +"\n" + value);
+                }catch(IOException ex){
+                    logger.warn("read attribute",ex);
+                }
+            }
+        }  
     }
 
     private void writeResponse(Channel channel) {
