@@ -1,6 +1,5 @@
 package org.k0D3St0rY.cs2013.server;
 
-import static org.jboss.netty.handler.codec.http.HttpHeaders.getHost;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
@@ -8,9 +7,13 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGT
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,6 +27,7 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpChunk;
@@ -34,9 +38,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
-import org.jboss.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import org.jboss.netty.handler.codec.http.multipart.DiskFileUpload;
-import org.jboss.netty.handler.codec.http.multipart.HttpDataFactory;
 import org.jboss.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import org.jboss.netty.logging.InternalLogger;
 import org.jboss.netty.logging.InternalLoggerFactory;
@@ -44,25 +46,24 @@ import org.jboss.netty.util.CharsetUtil;
 import org.k0D3St0rY.cs2013.service.ServiceFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.inject.Inject;
 
-public class HttpCSHandler extends SimpleChannelHandler {
+public class HttpCSHandler extends SimpleChannelUpstreamHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(HttpCSHandler.class);
 
     private final ServiceFactory serviceFactory;
 
     private HttpRequest request;
-
     private boolean readingChunks;
-
     private HttpPostRequestDecoder decoder;
 
     static {
-        DiskFileUpload.deleteOnExitTemporaryFile = true; // should delete file
-                                                         // on exit (in normal
-                                                         // exit)
-        DiskFileUpload.baseDirectory = null; // system temp directory
+        DiskFileUpload.deleteOnExitTemporaryFile = true;
+        DiskFileUpload.baseDirectory = null; 
     }
 
     @Inject
@@ -77,9 +78,9 @@ public class HttpCSHandler extends SimpleChannelHandler {
         }
     }
 
-    /** Buffer that stores the response content */
+    /** Buffer that stores the upload content */
     private final StringBuilder buf = new StringBuilder();
-
+    
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (!readingChunks) {
@@ -91,7 +92,7 @@ public class HttpCSHandler extends SimpleChannelHandler {
             logger.info("## " + request.getUri() + " ## " + request.getMethod());
             URI uri = new URI(request.getUri());
 
-            if (HttpMethod.POST.equals(request.getMethod())) {
+            if (HttpMethod.GET.equals(request.getMethod())) {
                 QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
                 Map<String, List<String>> params = queryStringDecoder.getParameters();
                 if (params.size() > 0) {
@@ -105,31 +106,27 @@ public class HttpCSHandler extends SimpleChannelHandler {
 
             if (HttpMethod.POST.equals(request.getMethod())) {
                 buf.setLength(0);
-//                buf.append("WELCOME TO THE WILD WILD WEB SERVER\r\n");
-//                buf.append("===================================\r\n");
-//
-//                buf.append("VERSION: " + request.getProtocolVersion() + "\r\n");
-//                buf.append("HOSTNAME: " + getHost(request, "unknown") + "\r\n");
-//                buf.append("REQUEST_URI: " + request.getUri() + "\r\n\r\n");
-//
-//                for (Map.Entry<String, String> h : request.getHeaders()) {
-//                    buf.append("HEADER: " + h.getKey() + " = " + h.getValue() + "\r\n");
-//                }
-//                buf.append("\r\n");
+                logger.debug("===================================\r\n");
 
-//                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
-//                Map<String, List<String>> params = queryStringDecoder.getParameters();
-//                if (!params.isEmpty()) {
-//                    for (Entry<String, List<String>> p : params.entrySet()) {
-//                        String key = p.getKey();
-//                        List<String> vals = p.getValue();
-//                        for (String val : vals) {
-//                            buf.append("PARAM: " + key + " = " + val + "\r\n");
-//                        }
-//                    }
-//                    buf.append("\r\n");
-//                }
+                logger.debug("VERSION: " + request.getProtocolVersion() + "\r\n");
+                //logger.debug("HOSTNAME: " + request.getHost(request, "unknown") + "\r\n");
+                logger.debug("REQUEST_URI: " + request.getUri() + "\r\n\r\n");
 
+                for (Map.Entry<String, String> h : request.getHeaders()) {
+                    logger.debug("HEADER: " + h.getKey() + " = " + h.getValue() + "\r\n");
+                }
+
+                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
+                Map<String, List<String>> params = queryStringDecoder.getParameters();
+                if (!params.isEmpty()) {
+                    for (Entry<String, List<String>> p : params.entrySet()) {
+                        String key = p.getKey();
+                        List<String> vals = p.getValue();
+                        for (String val : vals) {
+                            logger.debug("PARAM: " + key + " = " + val + "\r\n");
+                        }
+                    }
+                }
                 if (request.isChunked()) {
                     readingChunks = true;
                 } else {
@@ -152,13 +149,24 @@ public class HttpCSHandler extends SimpleChannelHandler {
     }
 
     private void writeResponse(MessageEvent e) {
-
-        System.out.println("---------------\n" + buf.toString() + "\n---------------\n");
+        logger.info("## " + request.getUri() + " ## " + request.getMethod());
+        URI uri;
+        try {
+            uri = new URI(request.getUri());
+            List<String> list = new ArrayList<String>();
+            list.add(buf.toString());
+            Map<String,List<String>> params = new HashMap<String, List<String>>();
+            params.put("content", list);
+            serviceFactory.create(uri.getPath()).execute(params);
+        } catch (URISyntaxException e1) {
+            e1.printStackTrace();
+        }
+ 
         // Decide whether to close the connection or not.
         boolean keepAlive = isKeepAlive(request);
 
         // Build the response object.
-        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, CREATED);
         // response.setContent(ChannelBuffers.copiedBuffer(buf.toString(), CharsetUtil.UTF_8));
         response.setHeader(CONTENT_TYPE, "text/plain; charset=UTF-8");
 
