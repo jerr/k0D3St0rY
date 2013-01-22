@@ -23,6 +23,11 @@ public class CSQuestionServiceTest {
         assertEquals("jeremie.codestory@gmail.com", get("/?q=Quelle+est+ton+adresse+email"));
     }
 
+    
+    @Test
+    public void testQuestion7() throws IOException {
+        assertEquals("2", get("/?q=1+1"));
+    }
     private String get(String uri) throws IOException {
         return get(uri, 200);
     }
