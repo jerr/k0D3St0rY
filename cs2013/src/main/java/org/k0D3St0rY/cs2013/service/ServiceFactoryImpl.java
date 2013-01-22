@@ -7,12 +7,15 @@ public class ServiceFactoryImpl implements ServiceFactory {
     private Map<String, AbstractCSService> services = new HashMap<String, AbstractCSService>();
 
     public ServiceFactoryImpl() {
-     services.put("/", new CSQuestionService());
-     services.put("/enonce/1", new CSUplaodService());
+        services.put("/", new CSQuestionService());
+        services.put("/enonce/1", new CSUploadService());
+        for (int i = 1; i < 101; i++) {
+            services.put("/scalaskel/change/"+i, (new CSScalaskelService(i)).compile());
+        }
     }
-    
+
     public AbstractCSService create(String path) {
-        if(services.containsKey(path))
+        if (services.containsKey(path))
             return services.get(path);
         return null;
     }

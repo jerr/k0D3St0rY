@@ -5,11 +5,10 @@ import java.util.Map;
 
 import org.jboss.netty.logging.InternalLogger;
 import org.jboss.netty.logging.InternalLoggerFactory;
-import org.k0D3St0rY.cs2013.server.HttpCSServer;
 
-public class CSUplaodService extends AbstractCSService {
+public class CSUploadService extends AbstractCSService {
 
-    static final InternalLogger logger = InternalLoggerFactory.getInstance(HttpCSServer.class);
+    static final InternalLogger logger = InternalLoggerFactory.getInstance(CSUploadService.class);
 
     @Override
     public CharSequence execute(Map<String, List<String>> params) {

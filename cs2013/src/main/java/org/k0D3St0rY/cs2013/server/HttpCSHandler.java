@@ -63,7 +63,7 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
 
     static {
         DiskFileUpload.deleteOnExitTemporaryFile = true;
-        DiskFileUpload.baseDirectory = null; 
+        DiskFileUpload.baseDirectory = null;
     }
 
     @Inject
@@ -80,7 +80,7 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
 
     /** Buffer that stores the upload content */
     private final StringBuilder buf = new StringBuilder();
-    
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         if (!readingChunks) {
@@ -95,13 +95,13 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
             if (HttpMethod.GET.equals(request.getMethod())) {
                 QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
                 Map<String, List<String>> params = queryStringDecoder.getParameters();
-                if (params.size() > 0) {
-                    CharSequence result = serviceFactory.create(uri.getPath()).execute(params);
-                    logger.info("## " + request.getUri() + " >> " + result);
-                    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-                    response.setContent(ChannelBuffers.copiedBuffer(result, Charsets.UTF_8));
-                    e.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
-                }
+                CharSequence result = serviceFactory.create(uri.getPath()).execute(params);
+                logger.info("## " + request.getUri() + " >> " + result);
+                HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                response.setContent(ChannelBuffers.copiedBuffer(result, Charsets.UTF_8));
+                response.setHeader(CONTENT_LENGTH, response.getContent().readableBytes());
+                e.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+                return;
             }
 
             if (HttpMethod.POST.equals(request.getMethod())) {
@@ -109,7 +109,7 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
                 logger.debug("===================================\r\n");
 
                 logger.debug("VERSION: " + request.getProtocolVersion() + "\r\n");
-                //logger.debug("HOSTNAME: " + request.getHost(request, "unknown") + "\r\n");
+                // logger.debug("HOSTNAME: " + request.getHost(request, "unknown") + "\r\n");
                 logger.debug("REQUEST_URI: " + request.getUri() + "\r\n\r\n");
 
                 for (Map.Entry<String, String> h : request.getHeaders()) {
@@ -155,13 +155,13 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
             uri = new URI(request.getUri());
             List<String> list = new ArrayList<String>();
             list.add(buf.toString());
-            Map<String,List<String>> params = new HashMap<String, List<String>>();
+            Map<String, List<String>> params = new HashMap<String, List<String>>();
             params.put("content", list);
             serviceFactory.create(uri.getPath()).execute(params);
         } catch (URISyntaxException e1) {
             e1.printStackTrace();
         }
- 
+
         // Decide whether to close the connection or not.
         boolean keepAlive = isKeepAlive(request);
 
@@ -177,28 +177,6 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
             // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
             response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
         }
-
-        // Encode the cookie.
-        // String cookieString = request.getHeader(COOKIE);
-        // if (cookieString != null) {
-        // CookieDecoder cookieDecoder = new CookieDecoder();
-        // Set<Cookie> cookies = cookieDecoder.decode(cookieString);
-        // if (!cookies.isEmpty()) {
-        // // Reset the cookies if necessary.
-        // CookieEncoder cookieEncoder = new CookieEncoder(true);
-        // for (Cookie cookie : cookies) {
-        // cookieEncoder.addCookie(cookie);
-        // response.addHeader(SET_COOKIE, cookieEncoder.encode());
-        // }
-        // }
-        // } else {
-        // // Browser sent no cookie. Add some.
-        // // CookieEncoder cookieEncoder = new CookieEncoder(true);
-        // // cookieEncoder.addCookie("key1", "value1");
-        // // response.addHeader(SET_COOKIE, cookieEncoder.encode());
-        // // cookieEncoder.addCookie("key2", "value2");
-        // // response.addHeader(SET_COOKIE, cookieEncoder.encode());
-        // }
 
         // Write the response.
         ChannelFuture future = e.getChannel().write(response);
