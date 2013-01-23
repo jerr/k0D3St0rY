@@ -34,6 +34,17 @@ public class CSQuestionServiceTest {
         assertEquals("6", get("/?q=(1+2)*2"));
     }
     
+    @Test
+    public void testQuestionCalcul3() throws IOException {
+        assertEquals("1,5", get("/?q=(1+2)/2"));
+    }
+    
+    @Test
+    public void testQuestionCalcul4() throws IOException {
+        assertEquals("110", get("/?q=(1+2+3+4+5+6+7+8+9+10)*2"));
+    }
+    
+    
     private String get(String uri) throws IOException {
         return get(uri, 200);
     }

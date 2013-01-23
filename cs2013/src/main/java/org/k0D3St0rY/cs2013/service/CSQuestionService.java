@@ -44,21 +44,24 @@ public class CSQuestionService extends AbstractCSService {
         while(eq.contains("(")) {
             String result = calcul(eq.substring(eq.indexOf('(')+1,eq.indexOf(')')));
             eq = eq.substring(0, eq.indexOf('(')) + result + eq.substring(eq.indexOf(')')+1);
-        }   
-        if(eq.contains(" ")) {
-            String[] values = StringUtil.split(eq, ' ');
-            return (new BigDecimal(values[0])).add(new BigDecimal(values[1])).toString();
-        } if(eq.contains("-")) {
-            String[] values = StringUtil.split(eq, '-');
-            return (new BigDecimal(values[0])).min(new BigDecimal(values[1])).toString();
-        } if(eq.contains("*")) {
-            String[] values = StringUtil.split(eq, '*');
-            return (new BigDecimal(values[0])).multiply(new BigDecimal(values[1])).toString();
-        } if(eq.contains("/")) {
-            String[] values = StringUtil.split(eq, '/');
-            return (new BigDecimal(values[0])).divide(new BigDecimal(values[1])).toString();
-        } 
-        return error;
-
-    }
+        }
+        while (eq.matches(".*[ */-].*")) {
+            if(eq.contains(" ")) {
+                String[] values = StringUtil.split(eq, ' ');
+                eq = eq.replace(values[0] + " " + values[1], (new BigDecimal(values[0]).add(new BigDecimal(values[1])).toString()));
+            } else if(eq.contains("-")) {
+                String[] values = StringUtil.split(eq, '-');
+                eq = eq.replace(values[0] + "-" + values[1], (new BigDecimal(values[0]).min(new BigDecimal(values[1])).toString()));
+            } else if(eq.contains("*")) {
+                String[] values = StringUtil.split(eq, '*');
+                eq = eq.replace(values[0] + "*" + values[1], (new BigDecimal(values[0]).multiply(new BigDecimal(values[1])).toString()));
+            } else if(eq.contains("/")) {
+                String[] values = StringUtil.split(eq, '/');
+                eq = eq.replace(values[0] + "/" + values[1], (new BigDecimal(values[0]).divide(new BigDecimal(values[1])).toString()));
+            } else {
+                return error;
+            } 
+        }
+        return eq;
+    }   
 }
