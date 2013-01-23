@@ -30,7 +30,9 @@ public class CSQuestionService extends AbstractCSService {
             if(questions.containsKey(key))
                 return questions.get(key);
             else {
-                return calcul(key);
+                String result = calcul(key);
+                // pas glop!
+                return result.replace('.', ',');
             }
         } else {
             return error;
