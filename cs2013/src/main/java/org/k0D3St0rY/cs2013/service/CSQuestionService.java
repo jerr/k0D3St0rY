@@ -1,6 +1,7 @@
 package org.k0D3St0rY.cs2013.service;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,24 +30,33 @@ public class CSQuestionService extends AbstractCSService {
             if(questions.containsKey(key))
                 return questions.get(key);
             else {
-                key = key.replace(',', '.');
-                if(key.contains(" ")) {
-                    String[] values = StringUtil.split(key, ' ');
-                    return (new BigDecimal(values[0])).add(new BigDecimal(values[1])).toString();
-                } if(key.contains("-")) {
-                    String[] values = StringUtil.split(key, '-');
-                    return (new BigDecimal(values[0])).min(new BigDecimal(values[1])).toString();
-                } if(key.contains("*")) {
-                    String[] values = StringUtil.split(key, '*');
-                    return (new BigDecimal(values[0])).multiply(new BigDecimal(values[1])).toString();
-                } if(key.contains("/")) {
-                    String[] values = StringUtil.split(key, '/');
-                    return (new BigDecimal(values[0])).divide(new BigDecimal(values[1])).toString();
-                } return error;
+                return calcul(key);
             }
         } else {
             return error;
         }
+
+    }
+    
+    private String calcul(String eq) {
+        while(eq.contains("(")) {
+            String result = calcul(eq.substring(eq.indexOf('(')+1,eq.indexOf(')')));
+            eq = eq.substring(0, eq.indexOf('(')) + result + eq.substring(eq.indexOf(')')+1);
+        }   
+        if(eq.contains(" ")) {
+            String[] values = StringUtil.split(eq, ' ');
+            return (new BigDecimal(values[0])).add(new BigDecimal(values[1])).toString();
+        } if(eq.contains("-")) {
+            String[] values = StringUtil.split(eq, '-');
+            return (new BigDecimal(values[0])).min(new BigDecimal(values[1])).toString();
+        } if(eq.contains("*")) {
+            String[] values = StringUtil.split(eq, '*');
+            return (new BigDecimal(values[0])).multiply(new BigDecimal(values[1])).toString();
+        } if(eq.contains("/")) {
+            String[] values = StringUtil.split(eq, '/');
+            return (new BigDecimal(values[0])).divide(new BigDecimal(values[1])).toString();
+        } 
+        return error;
 
     }
 }

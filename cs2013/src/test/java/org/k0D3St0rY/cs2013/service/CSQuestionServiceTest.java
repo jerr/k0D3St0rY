@@ -25,9 +25,15 @@ public class CSQuestionServiceTest {
 
     
     @Test
-    public void testQuestion7() throws IOException {
+    public void testQuestionCalcul1() throws IOException {
         assertEquals("2", get("/?q=1+1"));
     }
+    
+    @Test
+    public void testQuestionCalcul2() throws IOException {
+        assertEquals("6", get("/?q=(1+2)*2"));
+    }
+    
     private String get(String uri) throws IOException {
         return get(uri, 200);
     }
