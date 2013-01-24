@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.k0D3St0rY.cs2013.server.CSApplication;
 
-public class UploadTest {
+public class CSUploadServiceTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         CSApplication.main(new String[] { "-blocalhost", "-p8181" });        
@@ -29,6 +29,11 @@ public class UploadTest {
         assertEquals("", post("/enonce/1", 201));
     }
 
+    @Test
+    public void testUpload2() throws IOException {
+        assertEquals("", post("/enonce/2", 201));
+    }
+    
     private String post(String uri, int expectedStatusCode) throws IOException {
         HttpClient client = new HttpClient();
         PostMethod method = new PostMethod("http://localhost:8181" + uri);

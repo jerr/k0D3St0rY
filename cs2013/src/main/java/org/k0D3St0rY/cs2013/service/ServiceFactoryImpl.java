@@ -9,6 +9,7 @@ public class ServiceFactoryImpl implements ServiceFactory {
     public ServiceFactoryImpl() {
         services.put("/", new CSQuestionService());
         services.put("/enonce/1", new CSUploadService());
+        services.put("/enonce/2", new CSUploadService());
         for (int i = 1; i < 101; i++) {
             services.put("/scalaskel/change/"+i, (new CSScalaskelService(i)).compile());
         }
