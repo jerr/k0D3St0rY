@@ -11,7 +11,7 @@ import org.jboss.netty.util.internal.StringUtil;
 
 public class CSQuestionService extends AbstractCSService {
 
-    private final static Map<String,String> questions = new HashMap<String, String>();
+    private final static Map<String, String> questions = new HashMap<String, String>();
     private final static String error = "Sorry, I don't understand ...";
 
     public CSQuestionService() {
@@ -27,10 +27,10 @@ public class CSQuestionService extends AbstractCSService {
     public CharSequence execute(Map<String, List<String>> params) {
         if (!params.isEmpty() && params.containsKey("q")) {
             String key = params.get("q").get(0);
-            if(questions.containsKey(key))
+            if (questions.containsKey(key))
                 return questions.get(key);
             else {
-                String result = calcul(key.replace(',','.'));
+                String result = calcul(key.replace(',', '.'));
                 // pas glop!
                 result = result.replace('.', ',');
                 questions.put(key, result);
@@ -41,41 +41,41 @@ public class CSQuestionService extends AbstractCSService {
         }
 
     }
-    
+
     private String calcul(String eq) {
-        while(eq.contains("(")) {
+        while (eq.contains("(")) {
             int end = eq.indexOf(')');
             int start = eq.substring(0, end).lastIndexOf('(');
-            String result = calcul(eq.substring(start+1,end));
-            eq = eq.substring(0, start) + result + eq.substring(end+1);
+            String result = calcul(eq.substring(start + 1, end));
+            eq = eq.substring(0, start) + result + eq.substring(end + 1);
         }
         while (eq.matches(".*[*/].*")) {
-                Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([\\.0-9]+)(/|\\*)(\\d+).*").matcher(eq);
-                m.matches();
-                String value1 = m.group(2);
-                String value2 = m.group(4);
-                if(m.group(3).equals("*"))
-                    eq = eq.replace(value1 + "*" + value2, (new BigDecimal(value1).multiply(new BigDecimal(value2)).toString()));
-                else
-                    eq = eq.replace(value1 + "/" + value2, (new BigDecimal(value1).divide(new BigDecimal(value2)).toString()));
-        }
-        while (eq.matches(".*[ -].*")) {
-            Matcher m = Pattern.compile("(.*[^0-9]|^)([0-9]+)( |-)(\\d+)").matcher(eq);
+            Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([\\.0-9]+)(/|\\*)(\\d+).*").matcher(eq);
             m.matches();
             String value1 = m.group(2);
             String value2 = m.group(4);
-            if(m.group(3).equals(" "))
+            if (m.group(3).equals("*"))
+                eq = eq.replace(value1 + "*" + value2, (new BigDecimal(value1).multiply(new BigDecimal(value2)).toString()));
+            else
+                eq = eq.replace(value1 + "/" + value2, (new BigDecimal(value1).divide(new BigDecimal(value2)).toString()));
+        }
+        while (eq.matches(".*[ -].*")) {
+            Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([\\.0-9]+)( |-)([\\.0-9]+).*").matcher(eq);
+            m.matches();
+            String value1 = m.group(2);
+            String value2 = m.group(4);
+            if (m.group(3).equals(" "))
                 eq = eq.replace(value1 + " " + value2, (new BigDecimal(value1).add(new BigDecimal(value2)).toString()));
             else
                 eq = eq.replace(value1 + "-" + value2, (new BigDecimal(value1).subtract(new BigDecimal(value2)).toString()));
-    }
-        if(eq.contains(".")) {
+        }
+        if (eq.contains(".")) {
             while (eq.endsWith("0")) {
-                eq = eq.substring(0,eq.length()-1);
+                eq = eq.substring(0, eq.length() - 1);
             }
         }
-        if(eq.endsWith("."))
-            eq = eq.substring(0,eq.length()-1);
+        if (eq.endsWith("."))
+            eq = eq.substring(0, eq.length() - 1);
         return eq;
     }
 }

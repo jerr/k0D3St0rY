@@ -54,6 +54,13 @@ public class CSQuestionServiceTest {
         assertEquals("6", get("/?q=1,5*4"));
     }
     
+    @Test
+    public void testQuestionCalcul7() throws IOException {
+        assertEquals("6", get("/?q=((1,1+2)+3,14+4+(5+6+7)+(8+9+10)*4267387833344334647677634)/2*553344300034334349999000"));
+    }
+    
+    
+    
     
     
     
