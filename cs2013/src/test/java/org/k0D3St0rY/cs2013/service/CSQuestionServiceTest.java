@@ -56,10 +56,13 @@ public class CSQuestionServiceTest {
     
     @Test
     public void testQuestionCalcul7() throws IOException {
-        assertEquals("6", get("/?q=((1,1+2)+3,14+4+(5+6+7)+(8+9+10)*4267387833344334647677634)/2*553344300034334349999000"));
+        assertEquals("31878018903828899277492024491376690701584023926880", get("/?q=((1,1+2)+3,14+4+(5+6+7)+(8+9+10)*4267387833344334647677634)/2*553344300034334349999000"));
     }
     
-    
+    @Test
+    public void testQuestionCalcul8() throws IOException {
+        assertEquals("0", get("/?q=(-1)+(1)"));
+    }
     
     
     

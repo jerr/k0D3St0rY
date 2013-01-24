@@ -50,7 +50,7 @@ public class CSQuestionService extends AbstractCSService {
             eq = eq.substring(0, start) + result + eq.substring(end + 1);
         }
         while (eq.matches(".*[*/].*")) {
-            Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([\\.0-9]+)(/|\\*)(\\d+).*").matcher(eq);
+            Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([-\\.0-9]+)(/|\\*)([-\\.0-9]+).*").matcher(eq);
             m.matches();
             String value1 = m.group(2);
             String value2 = m.group(4);
@@ -59,12 +59,12 @@ public class CSQuestionService extends AbstractCSService {
             else
                 eq = eq.replace(value1 + "/" + value2, (new BigDecimal(value1).divide(new BigDecimal(value2)).toString()));
         }
-        while (eq.matches(".*[ -].*")) {
-            Matcher m = Pattern.compile("^(.*[^/\\*\\.0-9])*([\\.0-9]+)( |-)([\\.0-9]+).*").matcher(eq);
+        while (eq.matches(".*\\d[ -]\\d*.*")) {
+            Matcher m = Pattern.compile("^([^-/\\*\\.0-9])*((-|[0-9])[\\.0-9]*)( |-)([\\.0-9]+).*").matcher(eq);
             m.matches();
             String value1 = m.group(2);
-            String value2 = m.group(4);
-            if (m.group(3).equals(" "))
+            String value2 = m.group(5);
+            if (m.group(4).equals(" "))
                 eq = eq.replace(value1 + " " + value2, (new BigDecimal(value1).add(new BigDecimal(value2)).toString()));
             else
                 eq = eq.replace(value1 + "-" + value2, (new BigDecimal(value1).subtract(new BigDecimal(value2)).toString()));
