@@ -68,6 +68,7 @@ public class CSJajascriptService extends AbstractCSService {
             result.append("] }");
         }
 
+        logger.info(result.toString());
         return result.toString();
     }
 
