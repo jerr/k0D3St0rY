@@ -6,12 +6,19 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.GatheringByteChannel;
+import java.nio.channels.ScatteringByteChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +26,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferFactory;
+import org.jboss.netty.buffer.ChannelBufferIndexFinder;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -26,7 +35,6 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
@@ -46,9 +54,6 @@ import org.jboss.netty.util.CharsetUtil;
 import org.k0D3St0rY.cs2013.service.ServiceFactory;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.inject.Inject;
 
 public class HttpCSHandler extends SimpleChannelUpstreamHandler {
@@ -143,7 +148,7 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
                 readingChunks = false;
                 writeResponse(e);
             } else {
-                buf.append(chunk.getContent().toString(CharsetUtil.UTF_8) + "\r\n");
+                buf.append(chunk.getContent().toString(CharsetUtil.UTF_8));
             }
         }
     }
@@ -151,13 +156,15 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
     private void writeResponse(MessageEvent e) {
         logger.info("## " + request.getUri() + " ## " + request.getMethod());
         URI uri;
+        String result = "";
         try {
             uri = new URI(request.getUri());
             List<String> list = new ArrayList<String>();
             list.add(buf.toString());
             Map<String, List<String>> params = new HashMap<String, List<String>>();
             params.put("content", list);
-            serviceFactory.create(uri.getPath()).execute(params);
+            logger.info("## path: " + uri.getPath() + " ## " + serviceFactory);
+            result = (String) serviceFactory.create(uri.getPath()).execute(params);
         } catch (URISyntaxException e1) {
             e1.printStackTrace();
         }
@@ -172,6 +179,7 @@ public class HttpCSHandler extends SimpleChannelUpstreamHandler {
 
         if (keepAlive) {
             // Add 'Content-Length' header only for a keep-alive connection.
+            response.setContent(ChannelBuffers.copiedBuffer(result, Charsets.UTF_8));
             response.setHeader(CONTENT_LENGTH, response.getContent().readableBytes());
             // Add keep alive header as per:
             // - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
