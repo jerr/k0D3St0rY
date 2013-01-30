@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jboss.netty.util.internal.StringUtil;
-
 public class CSQuestionService extends AbstractCSService {
 
     private final static Map<String, String> questions = new HashMap<String, String>();
@@ -23,6 +21,7 @@ public class CSQuestionService extends AbstractCSService {
         questions.put("As tu bien recu le premier enonce(OUI/NON)", "OUI");
         questions.put("As tu passe une bonne nuit malgre les bugs de l etape precedente(PAS_TOP/BOF/QUELS_BUGS)","QUELS_BUGS");
         questions.put("As tu bien recu le second enonce(OUI/NON)","OUI");
+        questions.put("As tu copie le code de ndeloof(OUI/NON/JE_SUIS_NICOLAS)","NON");
     }
 
     @Override
