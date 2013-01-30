@@ -36,8 +36,8 @@ public class CSJajascriptServiceTest {
     public void testBig() throws IOException {
         List<Vol> vols = new ArrayList<Vol>();
         for (int i = 0; i < 10000; i++) {
-            int start = RandomUtils.nextInt(23);
-            int durre = 1 + RandomUtils.nextInt(23 - start);
+            int start = RandomUtils.nextInt(50);
+            int durre = 1 + RandomUtils.nextInt(50 - start);
             vols.add(new Vol("vol" + i, start, durre, RandomUtils.nextInt(30)));
         }
         assertEquals("", post(vols, 201));

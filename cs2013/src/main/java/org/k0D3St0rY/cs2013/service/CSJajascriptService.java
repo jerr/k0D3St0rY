@@ -22,6 +22,7 @@ public class CSJajascriptService extends AbstractCSService {
         ArrayListMultimap<Integer, Vol> volStartMap = ArrayListMultimap.create();
         //ArrayListMultimap<Integer, Vol> volEndMap = ArrayListMultimap.create();
 
+        int maxStart = 0;
         StringBuilder result = new StringBuilder();
         if (!params.isEmpty() && params.containsKey("content")) {
             for (String element : params.get("content")) {
@@ -38,6 +39,8 @@ public class CSJajascriptService extends AbstractCSService {
                         volStartMap.put(vol.getDepart(), vol);
               //          volEndMap.put(vol.depart + vol.durre, vol);
                         logger.info(vol.toJSON());
+                        if(vol.getDepart()>maxStart)
+                            maxStart = vol.getDepart();
                     }
                 }catch (Exception e) {
                    logger.error(" size : " + volStartMap.size(), e);
@@ -46,9 +49,9 @@ public class CSJajascriptService extends AbstractCSService {
 
             Vol startVol = null;
             int max = 0;
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < maxStart; i++) {
                 for (Vol vol : volStartMap.get(i)) {
-                    int prix = prixMax(vol, volStartMap);
+                    int prix = prixMax(vol, volStartMap,maxStart);
                     if (prix > max) {
                         max = prix;
                         startVol = vol;
@@ -68,12 +71,12 @@ public class CSJajascriptService extends AbstractCSService {
         return result.toString();
     }
 
-    private int prixMax(Vol vol, ArrayListMultimap<Integer, Vol> volStartMap) {
+    private int prixMax(Vol vol, ArrayListMultimap<Integer, Vol> volStartMap, int maxStart) {
         if (vol.gain == -1) {
             int max = 0;
-            for (int i = (vol.depart + vol.durre); i < 24; i++) {
+            for (int i = (vol.depart + vol.durre); i <= maxStart; i++) {
                 for (Vol nextVol : volStartMap.get(i)) {
-                    int prix = prixMax(nextVol, volStartMap);
+                    int prix = prixMax(nextVol, volStartMap, maxStart);
                     if (prix > max) {
                         max = prix;
                         vol.nextVol = nextVol;
