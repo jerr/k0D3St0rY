@@ -37,7 +37,6 @@ public class CSJajascriptService extends AbstractCSService {
                         vol.setPrix(((JSONObject) json).getInt("PRIX"));
                         vols.add(vol);
                         volStartMap.put(vol.getDepart(), vol);
-              //          volEndMap.put(vol.depart + vol.durre, vol);
                         logger.info(vol.toJSON());
                         if(vol.getDepart()>maxStart)
                             maxStart = vol.getDepart();
@@ -49,7 +48,7 @@ public class CSJajascriptService extends AbstractCSService {
 
             Vol startVol = null;
             int max = 0;
-            for (int i = 0; i < maxStart; i++) {
+            for (int i = maxStart; i>=0 ; i--) {
                 for (Vol vol : volStartMap.get(i)) {
                     int prix = prixMax(vol, volStartMap,maxStart);
                     if (prix > max) {
@@ -108,7 +107,6 @@ public class CSJajascriptService extends AbstractCSService {
         }
 
         public Vol() {
-            // TODO Auto-generated constructor stub
         }
 
         public String toJSON() {
